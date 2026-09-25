@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.github',
 ]
 
 SITE_ID = 1
@@ -130,17 +131,22 @@ LOGOUT_REDIRECT_URL = 'http://localhost:5173/'
 # Google OAuth Credentials (supports multiple common .env key formats)
 GOOGLE_CLIENT_ID = (
     os.environ.get('GOOGLE_CLIENT_ID')
-    or os.environ.get('GOOGLE_OAUTH_CLIENT_ID')
-    or os.environ.get('GOOGLE_ID')
-    or os.environ.get('CLIENT_ID')
     or ''
 ).strip().strip('"').strip("'")
 
 GOOGLE_CLIENT_SECRET = (
     os.environ.get('GOOGLE_CLIENT_SECRET')
-    or os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET')
-    or os.environ.get('GOOGLE_SECRET')
-    or os.environ.get('CLIENT_SECRET')
+    or ''
+).strip().strip('"').strip("'")
+
+# GitHub OAuth Credentials
+GITHUB_CLIENT_ID = (
+    os.environ.get('GITHUB_CLIENT_ID')
+    or ''
+).strip().strip('"').strip("'")
+
+GITHUB_CLIENT_SECRET = (
+    os.environ.get('GITHUB_CLIENT_SECRET')
     or ''
 ).strip().strip('"').strip("'")
 
@@ -158,7 +164,19 @@ SOCIALACCOUNT_PROVIDERS = {
         'AUTH_PARAMS': {
             'access_type': 'online',
         },
-    }
+    },
+    'github': {
+        'APP': {
+            'client_id': GITHUB_CLIENT_ID,
+            'secret': GITHUB_CLIENT_SECRET,
+            'key': '',
+        },
+        'SCOPE': [
+            'user',
+            'read:user',
+            'user:email',
+        ],
+    },
 }
 
 

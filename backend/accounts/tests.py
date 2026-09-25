@@ -68,3 +68,24 @@ class AccountAuthTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(response.data['success'])
         self.assertIn('Invalid', response.data['error'])
+
+    def test_github_auth_status_configured(self):
+        github_status_url = reverse('github_auth_status')
+        response = self.client.get(github_status_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['configured'])
+        self.assertTrue(response.data['client_id_present'])
+        self.assertTrue(response.data['client_secret_present'])
+
+    def test_logout_view(self):
+        logout_url = reverse('logout')
+        response = self.client.post(logout_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['success'])
+
+    def test_github_login_redirect(self):
+        github_login_url = reverse('github_login')
+        response = self.client.get(github_login_url)
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertIn('github.com/login/oauth/authorize', response.headers.get('Location'))
+        self.assertIn('client_id=Ov23liEqEVGQkBKJlQfi', response.headers.get('Location'))

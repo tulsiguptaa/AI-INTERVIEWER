@@ -23,7 +23,7 @@ export default function App() {
     }
   }, []);
 
-  // Check if session exists (e.g. from Google OAuth callback redirect)
+  // Check if session exists (e.g. from Google or GitHub OAuth callback redirect)
   useEffect(() => {
     fetch('http://127.0.0.1:8000/api/accounts/me/', {
       credentials: 'include',
@@ -36,6 +36,9 @@ export default function App() {
           if (window.location.search.includes('login=')) {
             window.history.replaceState({}, document.title, window.location.pathname);
           }
+        } else if (window.location.search.includes('login=')) {
+          // Clean up query param if login was cancelled or errored
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
       })
       .catch(() => {});
@@ -47,6 +50,10 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    fetch('http://127.0.0.1:8000/api/accounts/logout/', {
+      method: 'POST',
+      credentials: 'include',
+    }).catch(() => {});
     setCurrentUser(null);
     localStorage.removeItem('ai_interviewer_user');
     setActiveTab('login');

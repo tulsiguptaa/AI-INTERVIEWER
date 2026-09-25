@@ -241,8 +241,16 @@ export default function Login({ onSwitchToSignup, onLoginSuccess }) {
           <button
             type="button"
             className="intervue-social-btn"
-            onClick={() => {
-              setError('GitHub SSO integration ready in production tier.');
+            onClick={async () => {
+              try {
+                const res = await fetch('http://127.0.0.1:8000/api/accounts/github/status/');
+                const data = await res.json();
+                if (!data.configured) {
+                  setError('GitHub Client ID or Secret is missing. Please save GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in your backend/.env file.');
+                  return;
+                }
+              } catch (_) {}
+              window.location.href = 'http://127.0.0.1:8000/accounts/github/login/';
             }}
           >
             <svg className="social-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">

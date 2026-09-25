@@ -156,3 +156,48 @@ def google_auth_status_view(request):
         'client_secret_present': bool(client_secret),
         'client_id_preview': f"{client_id[:8]}...{client_id[-10:]}" if len(client_id) > 18 else (client_id if client_id else None)
     })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def github_auth_status_view(request):
+    """
+    Returns whether GitHub OAuth credentials are loaded and configured.
+    Dynamically re-reads .env so changes are reflected immediately.
+    """
+    import os
+    from django.conf import settings
+    from dotenv import load_dotenv
+
+    base_dir = getattr(settings, 'BASE_DIR', None)
+    if base_dir:
+        load_dotenv(base_dir.parent / '.env', override=True)
+        load_dotenv(base_dir / '.env', override=True)
+
+    client_id = (os.environ.get('GITHUB_CLIENT_ID') or getattr(settings, 'GITHUB_CLIENT_ID', '')).strip().strip('"').strip("'")
+    client_secret = (os.environ.get('GITHUB_CLIENT_SECRET') or getattr(settings, 'GITHUB_CLIENT_SECRET', '')).strip().strip('"').strip("'")
+
+    if client_id and 'github' in settings.SOCIALACCOUNT_PROVIDERS:
+        settings.GITHUB_CLIENT_ID = client_id
+        settings.GITHUB_CLIENT_SECRET = client_secret
+        settings.SOCIALACCOUNT_PROVIDERS['github']['APP']['client_id'] = client_id
+        settings.SOCIALACCOUNT_PROVIDERS['github']['APP']['secret'] = client_secret
+
+    is_configured = bool(client_id and client_secret)
+    return Response({
+        'configured': is_configured,
+        'client_id_present': bool(client_id),
+        'client_secret_present': bool(client_secret),
+        'client_id_preview': f"{client_id[:6]}...{client_id[-4:]}" if len(client_id) > 10 else (client_id if client_id else None)
+    })
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def logout_view(request):
+    """
+    Terminates the user's Django session.
+    """
+    from django.contrib.auth import logout
+    logout(request)
+    return Response({'success': True, 'message': 'Logged out successfully.'})
