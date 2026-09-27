@@ -4,6 +4,7 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import StudentDashboard from './components/StudentDashboard';
 import HomePage from './components/HomePage';
+import ResumeUpload from './components/ResumeUpload';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('login'); // 'login' or 'signup'
@@ -19,6 +20,9 @@ export default function App() {
 
   const [view, setView] = useState(() => {
     const params = new URLSearchParams(window.location.search);
+    if (params.get('upload') || params.get('resume') || params.get('view') === 'upload') {
+      return 'upload-resume';
+    }
     if (params.get('auth') || params.get('login')) {
       return 'auth';
     }
@@ -89,6 +93,7 @@ export default function App() {
           onOpenAuth={handleOpenAuth}
           currentUser={currentUser}
           onGoToDashboard={() => setView('dashboard')}
+          onOpenUpload={() => setView('upload-resume')}
         />
       )}
 
@@ -98,8 +103,19 @@ export default function App() {
             user={currentUser}
             onLogout={handleLogout}
             onViewHome={() => setView('home')}
+            onOpenUpload={() => setView('upload-resume')}
           />
         </div>
+      )}
+
+      {view === 'upload-resume' && (
+        <ResumeUpload
+          currentUser={currentUser}
+          onBack={() => setView(currentUser ? 'dashboard' : 'home')}
+          onUploadSuccess={(fileData) => {
+            console.log('Resume uploaded successfully:', fileData);
+          }}
+        />
       )}
 
       {view === 'auth' && (

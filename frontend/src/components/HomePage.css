@@ -640,6 +640,28 @@
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.4);
 }
 
+.process-step-interactive {
+  cursor: pointer;
+}
+
+.process-step-interactive:hover {
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 16px 40px rgba(99, 102, 241, 0.15);
+}
+
+.step-pill-action {
+  background: rgba(99, 102, 241, 0.15) !important;
+  color: #a5b4fc !important;
+  border-color: rgba(99, 102, 241, 0.35) !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease;
+}
+
+.process-step-interactive:hover .step-pill-action {
+  background: rgba(99, 102, 241, 0.28) !important;
+  color: #ffffff !important;
+}
+
 .step-card-header {
   display: flex;
   align-items: center;

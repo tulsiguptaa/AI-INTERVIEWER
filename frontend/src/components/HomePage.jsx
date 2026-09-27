@@ -107,7 +107,7 @@ const PERSONALIZATION_TRACKS = [
   }
 ];
 
-export default function HomePage({ onOpenAuth, currentUser, onGoToDashboard }) {
+export default function HomePage({ onOpenAuth, currentUser, onGoToDashboard, onOpenUpload }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedPersonalization, setSelectedPersonalization] = useState(0);
   const [feedbackTab, setFeedbackTab] = useState('rubric'); // 'rubric' | 'strengths' | 'model'
@@ -379,7 +379,14 @@ export default function HomePage({ onOpenAuth, currentUser, onGoToDashboard }) {
             {/* 4 Connected Cards Timeline */}
             <div className="process-timeline-grid">
               {/* Step 1 */}
-              <div className="process-step-card">
+              <div
+                className="process-step-card process-step-interactive"
+                onClick={onOpenUpload}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && onOpenUpload && onOpenUpload()}
+                title="Click to Upload Your Resume"
+              >
                 <div className="step-card-header">
                   <span className="step-number">01</span>
                   <div className="step-icon-wrap">
@@ -388,11 +395,12 @@ export default function HomePage({ onOpenAuth, currentUser, onGoToDashboard }) {
                 </div>
                 <h3 className="step-title">Upload Your Resume</h3>
                 <p className="step-description">
-                  Upload your PDF or Word resume. Our neural extraction engine automatically parses your projects, tech stack, and seniority level in seconds.
+                  Upload your PDF resume. Our neural extraction engine automatically parses your projects, tech stack, and seniority level in seconds.
                 </p>
                 <div className="step-pills">
-                  <span className="step-pill">PDF & DOCX</span>
+                  <span className="step-pill">PDF Format</span>
                   <span className="step-pill">Skills Parsing</span>
+                  <span className="step-pill step-pill-action">Upload Now →</span>
                 </div>
                 <div className="step-connector-line" aria-hidden="true"></div>
               </div>

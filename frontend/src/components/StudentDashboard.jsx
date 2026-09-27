@@ -10,10 +10,11 @@ import {
   ArrowUpRight,
   Flame,
   ChevronRight,
-  Compass
+  Compass,
+  UploadCloud
 } from 'lucide-react';
 
-export default function StudentDashboard({ user, onLogout, onViewHome }) {
+export default function StudentDashboard({ user, onLogout, onViewHome, onOpenUpload }) {
   const [mockStarted, setMockStarted] = useState(false);
 
   const getInitials = (name) => {
@@ -49,6 +50,17 @@ export default function StudentDashboard({ user, onLogout, onViewHome }) {
         </div>
 
         <div className="dashboard-actions-group">
+          {onOpenUpload && (
+            <button
+              type="button"
+              className="btn-view-home"
+              onClick={onOpenUpload}
+              title="Upload resume for personalized mock interviews"
+            >
+              <UploadCloud size={16} />
+              <span>Upload Resume</span>
+            </button>
+          )}
           {onViewHome && (
             <button
               type="button"
