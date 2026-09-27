@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Mic, Shield } from 'lucide-react';
+import { Mic, Shield, ArrowLeft } from 'lucide-react';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import StudentDashboard from './components/StudentDashboard';
+import HomePage from './components/HomePage';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('login'); // 'login' or 'signup'
@@ -14,6 +15,15 @@ export default function App() {
       localStorage.removeItem('ai_interviewer_user');
       return null;
     }
+  });
+
+  const [view, setView] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('auth') || params.get('login')) {
+      return 'auth';
+    }
+    const savedUser = localStorage.getItem('ai_interviewer_user');
+    return savedUser ? 'dashboard' : 'home';
   });
 
   // Handle direct navigation to /admin or /admin/
@@ -33,6 +43,7 @@ export default function App() {
         if (data && data.authenticated && data.user) {
           setCurrentUser(data.user);
           localStorage.setItem('ai_interviewer_user', JSON.stringify(data.user));
+          setView('dashboard');
           if (window.location.search.includes('login=')) {
             window.history.replaceState({}, document.title, window.location.pathname);
           }
@@ -44,9 +55,16 @@ export default function App() {
       .catch(() => {});
   }, []);
 
+  const handleOpenAuth = (mode = 'login') => {
+    setActiveTab(mode);
+    setView('auth');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
     localStorage.setItem('ai_interviewer_user', JSON.stringify(user));
+    setView('dashboard');
   };
 
   const handleLogout = () => {
@@ -57,6 +75,7 @@ export default function App() {
     setCurrentUser(null);
     localStorage.removeItem('ai_interviewer_user');
     setActiveTab('login');
+    setView('home');
   };
 
   if (window.location.pathname.startsWith('/admin')) {
@@ -65,24 +84,48 @@ export default function App() {
 
   return (
     <div className="app-root">
-      {currentUser ? (
-        /* Authenticated Student Dashboard */
+      {view === 'home' && (
+        <HomePage
+          onOpenAuth={handleOpenAuth}
+          currentUser={currentUser}
+          onGoToDashboard={() => setView('dashboard')}
+        />
+      )}
+
+      {view === 'dashboard' && currentUser && (
         <div className="dashboard-wrapper">
-          <StudentDashboard user={currentUser} onLogout={handleLogout} />
+          <StudentDashboard
+            user={currentUser}
+            onLogout={handleLogout}
+            onViewHome={() => setView('home')}
+          />
         </div>
-      ) : (
-        /* Intervue Centered Authentication Portal */
+      )}
+
+      {view === 'auth' && (
         <div className="intervue-auth-page">
           {/* Subtle Ambient Glows */}
           <div className="ambient-glow-top-left"></div>
           <div className="ambient-glow-center"></div>
+
+          {/* Return to Home / Overview Navigation Bar */}
+          <div className="auth-nav-bar">
+            <button
+              type="button"
+              className="auth-back-btn"
+              onClick={() => setView('home')}
+            >
+              <ArrowLeft size={15} />
+              <span>Back to Overview</span>
+            </button>
+          </div>
 
           {/* Top Brand Logo & Header */}
           <div className="intervue-brand-header">
             <div className="intervue-logo-box">
               <Mic size={22} className="intervue-mic-icon" />
             </div>
-            <h1 className="intervue-brand-title">Intervue</h1>
+            <h1 className="intervue-brand-title">AI Interviewer</h1>
           </div>
 
           {/* Centered Auth Card */}

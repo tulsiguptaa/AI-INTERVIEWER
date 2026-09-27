@@ -9,10 +9,11 @@ import {
   Clock,
   ArrowUpRight,
   Flame,
-  ChevronRight
+  ChevronRight,
+  Compass
 } from 'lucide-react';
 
-export default function StudentDashboard({ user, onLogout }) {
+export default function StudentDashboard({ user, onLogout, onViewHome }) {
   const [mockStarted, setMockStarted] = useState(false);
 
   const getInitials = (name) => {
@@ -47,15 +48,28 @@ export default function StudentDashboard({ user, onLogout }) {
           </div>
         </div>
 
-        <button
-          type="button"
-          className="btn-signout"
-          onClick={onLogout}
-          title="Sign out of student portal"
-        >
-          <LogOut size={16} />
-          <span>Sign Out</span>
-        </button>
+        <div className="dashboard-actions-group">
+          {onViewHome && (
+            <button
+              type="button"
+              className="btn-view-home"
+              onClick={onViewHome}
+              title="View Home & Platform Overview"
+            >
+              <Compass size={16} />
+              <span>Platform Overview</span>
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn-signout"
+            onClick={onLogout}
+            title="Sign out of student portal"
+          >
+            <LogOut size={16} />
+            <span>Sign Out</span>
+          </button>
+        </div>
       </div>
 
       {/* Readiness Index & Streak Card */}
