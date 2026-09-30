@@ -5,6 +5,7 @@ import Signup from './components/Signup';
 import StudentDashboard from './components/StudentDashboard';
 import HomePage from './components/HomePage';
 import ResumeUpload from './components/ResumeUpload';
+import { apiFetch, saveAuthSession, clearAuthSession } from './services/api';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('login'); // 'login' or 'signup'
@@ -37,17 +38,17 @@ export default function App() {
     }
   }, []);
 
-  // Check if session exists (e.g. from Google or GitHub OAuth callback redirect)
+  // Check if session exists (e.g. from Google or GitHub OAuth callback redirect or existing session)
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/accounts/me/', {
-      credentials: 'include',
-    })
+    apiFetch('/accounts/me/')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.authenticated && data.user) {
           setCurrentUser(data.user);
-          localStorage.setItem('ai_interviewer_user', JSON.stringify(data.user));
-          setView('dashboard');
+          saveAuthSession(data.user, data.session_key);
+          if (view !== 'upload-resume') {
+            setView('dashboard');
+          }
           if (window.location.search.includes('login=')) {
             window.history.replaceState({}, document.title, window.location.pathname);
           }
@@ -67,17 +68,16 @@ export default function App() {
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
-    localStorage.setItem('ai_interviewer_user', JSON.stringify(user));
+    saveAuthSession(user);
     setView('dashboard');
   };
 
   const handleLogout = () => {
-    fetch('http://127.0.0.1:8000/api/accounts/logout/', {
+    apiFetch('/accounts/logout/', {
       method: 'POST',
-      credentials: 'include',
     }).catch(() => {});
     setCurrentUser(null);
-    localStorage.removeItem('ai_interviewer_user');
+    clearAuthSession();
     setActiveTab('login');
     setView('home');
   };
@@ -111,6 +111,7 @@ export default function App() {
       {view === 'upload-resume' && (
         <ResumeUpload
           currentUser={currentUser}
+          onOpenAuth={handleOpenAuth}
           onBack={() => setView(currentUser ? 'dashboard' : 'home')}
           onUploadSuccess={(fileData) => {
             console.log('Resume uploaded successfully:', fileData);

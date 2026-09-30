@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { User, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, ArrowRight, Check, X } from 'lucide-react';
+import { apiFetch, saveAuthSession } from '../services/api';
 
 export default function Signup({ onSwitchToLogin, onSignupSuccess }) {
   const [formData, setFormData] = useState({
@@ -79,11 +80,8 @@ export default function Signup({ onSwitchToLogin, onSignupSuccess }) {
     setLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/accounts/signup/', {
+      const response = await apiFetch('/accounts/signup/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           student_name: formData.student_name.trim(),
           student_email: formData.student_email.trim().toLowerCase(),
@@ -96,6 +94,8 @@ export default function Signup({ onSwitchToLogin, onSignupSuccess }) {
       if (!response.ok || !data.success) {
         throw new Error(data.error || 'Failed to create student account. Please try again.');
       }
+
+      saveAuthSession(data.user, data.session_key);
 
       setSuccess('Account created successfully! Preparing your student workspace...');
       setTimeout(() => {

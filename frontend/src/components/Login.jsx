@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, ArrowRight, Zap } from 'lucide-react';
 import ForgotPasswordModal from './ForgotPasswordModal';
+import { apiFetch, saveAuthSession } from '../services/api';
 
 export default function Login({ onSwitchToSignup, onLoginSuccess }) {
   const [formData, setFormData] = useState({
@@ -44,11 +45,8 @@ export default function Login({ onSwitchToSignup, onLoginSuccess }) {
     setLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/accounts/login/', {
+      const response = await apiFetch('/accounts/login/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           student_email: formData.student_email.trim(),
           student_password: formData.student_password,
@@ -60,6 +58,8 @@ export default function Login({ onSwitchToSignup, onLoginSuccess }) {
       if (!response.ok || !data.success) {
         throw new Error(data.error || 'Invalid email or password. Please verify your credentials.');
       }
+
+      saveAuthSession(data.user, data.session_key);
 
       setSuccess('Authentication successful! Loading your dashboard...');
       setTimeout(() => {

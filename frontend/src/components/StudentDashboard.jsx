@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
   ShieldCheck,
@@ -11,11 +11,42 @@ import {
   Flame,
   ChevronRight,
   Compass,
-  UploadCloud
+  UploadCloud,
+  Database,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
 } from 'lucide-react';
+import { apiFetch } from '../services/api';
 
 export default function StudentDashboard({ user, onLogout, onViewHome, onOpenUpload }) {
   const [mockStarted, setMockStarted] = useState(false);
+  const [resumeData, setResumeData] = useState(null);
+  const [loadingResume, setLoadingResume] = useState(true);
+  const [showExtractedText, setShowExtractedText] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    apiFetch('/accounts/resumes/latest/')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted) {
+          if (data && data.success && data.resume) {
+            setResumeData(data.resume);
+          }
+          setLoadingResume(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not fetch active resume:', err);
+        if (isMounted) setLoadingResume(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const getInitials = (name) => {
     if (!name) return 'ST';
@@ -125,6 +156,82 @@ export default function StudentDashboard({ user, onLogout, onViewHome, onOpenUpl
             <span className="radial-label">Readiness</span>
           </div>
         </div>
+      </div>
+
+      {/* Active Profile Resume Card (Stored in PostgreSQL) */}
+      <div className="dashboard-resume-card">
+        <div className="dashboard-resume-header">
+          <div className="resume-icon-badge">
+            <FileText size={22} className="text-indigo" />
+          </div>
+          <div className="resume-meta-text">
+            <div className="resume-title-row">
+              <h4 className="resume-card-title">
+                {loadingResume ? 'Checking PostgreSQL Resume...' : resumeData ? resumeData.file_name : 'No Resume Uploaded Yet'}
+              </h4>
+              {resumeData && (
+                <span className="postgres-active-badge">
+                  <Database size={12} />
+                  <span>Stored in PostgreSQL</span>
+                </span>
+              )}
+            </div>
+            <p className="resume-card-sub">
+              {resumeData
+                ? `Uploaded on ${new Date(resumeData.uploaded_at).toLocaleDateString()} • Size: ${(resumeData.file_size / 1024).toFixed(1)} KB • Extracted text saved to database`
+                : 'Upload your PDF resume to calibrate mock questions, match tech stack, and extract your project highlights.'}
+            </p>
+          </div>
+
+          <div className="resume-card-actions">
+            {onOpenUpload && (
+              <button
+                type="button"
+                className="btn-dashboard-upload"
+                onClick={onOpenUpload}
+              >
+                <UploadCloud size={15} />
+                <span>{resumeData ? 'Upload New Resume' : 'Upload Resume Now'}</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {resumeData?.analysis?.skills?.length > 0 && (
+          <div className="dashboard-skills-row">
+            <span className="skills-row-label">Detected Skills ({resumeData.analysis.skills.length}):</span>
+            <div className="skills-chips">
+              {resumeData.analysis.skills.slice(0, 12).map((skill) => (
+                <span key={skill} className="skill-chip">
+                  {skill}
+                </span>
+              ))}
+              {resumeData.analysis.skills.length > 12 && (
+                <span className="skill-chip-more">+{resumeData.analysis.skills.length - 12} more</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {resumeData?.extracted_text && (
+          <div className="dashboard-extracted-text-toggle">
+            <button
+              type="button"
+              className="btn-view-extracted-db"
+              onClick={() => setShowExtractedText(!showExtractedText)}
+            >
+              <FileText size={13} />
+              <span>{showExtractedText ? 'Hide Extracted Text' : 'View Extracted Text from PostgreSQL'}</span>
+              {showExtractedText ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+            </button>
+
+            {showExtractedText && (
+              <div className="dashboard-extracted-preview">
+                <pre>{resumeData.extracted_text}</pre>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Primary Action Section */}

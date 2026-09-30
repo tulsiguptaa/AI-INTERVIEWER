@@ -15,8 +15,12 @@ import {
   ArrowRight,
   BrainCircuit,
   Loader2,
-  RotateCcw
+  RotateCcw,
+  Database,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
+import { apiFetch } from '../services/api';
 import './ResumeUpload.css';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
@@ -29,14 +33,26 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-export default function ResumeUpload({ onBack, onUploadSuccess, _currentUser }) {
+export default function ResumeUpload({ onBack, onUploadSuccess, currentUser, onOpenAuth }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState(null);
   const [uploadStatus, setUploadStatus] = useState('idle'); // 'idle' | 'ready' | 'uploading' | 'success'
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedResumeData, setUploadedResumeData] = useState(null);
+  const [showExtractedText, setShowExtractedText] = useState(false);
 
   const fileInputRef = useRef(null);
+
+  // Robust current user resolution (prop or localStorage)
+  const activeUser = currentUser || (() => {
+    try {
+      const u = localStorage.getItem('ai_interviewer_user');
+      return u ? JSON.parse(u) : null;
+    } catch {
+      return null;
+    }
+  })();
 
   const validateAndSelectFile = (file) => {
     setError(null);
@@ -110,39 +126,58 @@ export default function ResumeUpload({ onBack, onUploadSuccess, _currentUser }) 
     setUploadStatus('idle');
     setUploadProgress(0);
     setError(null);
+    setShowExtractedText(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
-  const handleUploadResume = () => {
+  const handleUploadResume = async () => {
     if (!selectedFile || uploadStatus === 'uploading') return;
 
     setUploadStatus('uploading');
-    setUploadProgress(15);
+    setUploadProgress(30);
     setError(null);
 
-    // Realistic upload & analysis progression
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 90) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setUploadProgress(100);
-            setUploadStatus('success');
-            if (onUploadSuccess) {
-              onUploadSuccess({
-                fileName: selectedFile.name,
-                fileSize: selectedFile.size,
-                uploadedAt: new Date().toISOString()
-              });
-            }
-          }, 350);
-          return 90;
-        }
-        return prev + 25;
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    // Pass candidate identity as reliable fallback for PostgreSQL storage
+    if (activeUser?.student_email) {
+      formData.append('user_email', activeUser.student_email);
+    }
+    if (activeUser?.id) {
+      formData.append('user_id', String(activeUser.id));
+    }
+
+    try {
+      const response = await apiFetch('/accounts/resumes/upload/', {
+        method: 'POST',
+        body: formData,
       });
-    }, 200);
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setUploadProgress(100);
+        setUploadStatus('success');
+        setUploadedResumeData(data.resume);
+        if (onUploadSuccess) {
+          onUploadSuccess(data.resume);
+        }
+      } else {
+        if (response.status === 401) {
+          setError('Authentication required. Please sign in to save your resume to your PostgreSQL account.');
+        } else {
+          setError(data.error || 'Failed to upload resume. Please try again.');
+        }
+        setUploadStatus('ready');
+      }
+    } catch (err) {
+      console.warn('Backend server connection error:', err);
+      setError('Could not connect to the backend server. Please verify Django is running on port 8000.');
+      setUploadStatus('ready');
+    }
   };
 
   return (
@@ -196,6 +231,29 @@ export default function ResumeUpload({ onBack, onUploadSuccess, _currentUser }) 
             <p className="upload-main-description">
               AI analyzes your background to extract relevant technical skills, past projects, and experience to generate personalized, realistic interview questions.
             </p>
+
+            {activeUser ? (
+              <div className="upload-active-user-pill">
+                <ShieldCheck size={14} className="text-emerald" />
+                <span>
+                  Logged in as <strong>{activeUser.student_name || activeUser.student_email}</strong>
+                </span>
+                <span className="postgres-badge-inline">
+                  <Database size={12} />
+                  <span>PostgreSQL Connected</span>
+                </span>
+              </div>
+            ) : (
+              <div className="upload-guest-warning">
+                <AlertCircle size={14} className="text-amber" />
+                <span>You are currently not signed in.</span>
+                {onOpenAuth && (
+                  <button type="button" className="btn-inline-login" onClick={() => onOpenAuth('login')}>
+                    Sign In to save to PostgreSQL
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Error Alert Display */}
@@ -283,7 +341,7 @@ export default function ResumeUpload({ onBack, onUploadSuccess, _currentUser }) 
                       {uploadStatus === 'success' && (
                         <span className="status-badge status-success">
                           <CheckCircle2 size={13} className="text-emerald" />
-                          Uploaded successfully
+                          Uploaded & Stored in PostgreSQL
                         </span>
                       )}
                     </div>
@@ -318,9 +376,68 @@ export default function ResumeUpload({ onBack, onUploadSuccess, _currentUser }) 
 
                 {/* Success Banner */}
                 {uploadStatus === 'success' && (
-                  <div className="upload-success-pill">
-                    <CheckCircle2 size={15} className="text-emerald" />
-                    <span>Resume parsed & mapped to your AI interview profile.</span>
+                  <div className="upload-success-container">
+                    <div className="upload-success-pill">
+                      <CheckCircle2 size={15} className="text-emerald" />
+                      <span>Resume parsed & stored securely in PostgreSQL database.</span>
+                    </div>
+
+                    <div className="upload-db-status-row">
+                      <span className="db-badge">
+                        <Database size={13} />
+                        <span>Database: PostgreSQL (ai_interviewer)</span>
+                      </span>
+                      {uploadedResumeData?.id && (
+                        <span className="db-badge-id">Stored Record ID #{uploadedResumeData.id}</span>
+                      )}
+                    </div>
+
+                    {uploadedResumeData?.analysis?.skills?.length > 0 && (
+                      <div className="extracted-skills-box">
+                        <span className="extracted-skills-label">
+                          Detected Skills ({uploadedResumeData.analysis.skills.length}):
+                        </span>
+                        <div className="extracted-skills-tags">
+                          {uploadedResumeData.analysis.skills.slice(0, 10).map((skill) => (
+                            <span key={skill} className="extracted-skill-pill">
+                              {skill}
+                            </span>
+                          ))}
+                          {uploadedResumeData.analysis.skills.length > 10 && (
+                            <span className="extracted-skill-more">
+                              +{uploadedResumeData.analysis.skills.length - 10} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {uploadedResumeData?.extracted_text && (
+                      <div className="extracted-text-section">
+                        <button
+                          type="button"
+                          className="btn-toggle-extracted-text"
+                          onClick={() => setShowExtractedText(!showExtractedText)}
+                        >
+                          <FileText size={14} />
+                          <span>
+                            {showExtractedText
+                              ? 'Hide Extracted PDF Text'
+                              : 'View Extracted Text from PDF (PostgreSQL Stored)'}
+                          </span>
+                          {showExtractedText ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </button>
+
+                        {showExtractedText && (
+                          <div className="extracted-text-viewer">
+                            <div className="extracted-text-header">
+                              <span>Raw Text Extracted from PDF (Stored in PostgreSQL Database):</span>
+                            </div>
+                            <pre className="extracted-text-pre">{uploadedResumeData.extracted_text}</pre>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

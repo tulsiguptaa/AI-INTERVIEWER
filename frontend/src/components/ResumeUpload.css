@@ -478,6 +478,12 @@
   transition: width 0.2s ease;
 }
 
+.upload-success-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .upload-success-pill {
   display: inline-flex;
   align-items: center;
@@ -489,6 +495,46 @@
   font-weight: 500;
   padding: 8px 12px;
   border-radius: 8px;
+}
+
+.extracted-skills-box {
+  background: rgba(8, 12, 22, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.extracted-skills-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.extracted-skills-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.extracted-skill-pill {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #38bdf8;
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.extracted-skill-more {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  align-self: center;
 }
 
 /* ==========================================================================
@@ -693,4 +739,141 @@
   .file-name {
     max-width: 180px;
   }
+}
+
+/* ==========================================================================
+   POSTGRESQL & AUTH STATUS ENHANCEMENTS
+   ========================================================================== */
+.upload-active-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  color: #e2e8f0;
+  margin-top: 10px;
+}
+
+.postgres-badge-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.upload-guest-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  color: #fde68a;
+  margin-top: 10px;
+}
+
+.btn-inline-login {
+  background: transparent;
+  border: none;
+  color: #60a5fa;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0;
+}
+
+.upload-db-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
+.db-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #93c5fd;
+  font-weight: 500;
+}
+
+.db-badge-id {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-family: monospace;
+}
+
+.extracted-text-section {
+  margin-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+}
+
+.btn-toggle-extracted-text {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-toggle-extracted-text:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.extracted-text-viewer {
+  margin-top: 10px;
+  background: #04060a;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  overflow: hidden;
+  text-align: left;
+}
+
+.extracted-text-header {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.extracted-text-pre {
+  margin: 0;
+  padding: 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: #e2e8f0;
+  max-height: 240px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
