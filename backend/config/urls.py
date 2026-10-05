@@ -23,6 +23,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),
+    path('api/interviews/', include('interviews.urls')),
     path('accounts/social/login/cancelled/', social_login_cancelled_redirect),
     path('accounts/social/login/error/', social_login_error_redirect),
     path('accounts/', include('allauth.urls')),

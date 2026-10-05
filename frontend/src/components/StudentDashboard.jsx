@@ -20,11 +20,12 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '../services/api';
 
-export default function StudentDashboard({ user, onLogout, onViewHome, onOpenUpload }) {
-  const [mockStarted, setMockStarted] = useState(false);
+export default function StudentDashboard({ user, onLogout, onViewHome, onOpenUpload, onStartInterview }) {
   const [resumeData, setResumeData] = useState(null);
   const [loadingResume, setLoadingResume] = useState(true);
   const [showExtractedText, setShowExtractedText] = useState(false);
+  const [analytics, setAnalytics] = useState(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -42,6 +43,15 @@ export default function StudentDashboard({ user, onLogout, onViewHome, onOpenUpl
         console.warn('Could not fetch active resume:', err);
         if (isMounted) setLoadingResume(false);
       });
+
+    apiFetch('/interviews/analytics/')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data && data.success) {
+          setAnalytics(data.analytics);
+        }
+      })
+      .catch((err) => console.warn('Could not fetch analytics:', err));
 
     return () => {
       isMounted = false;
@@ -81,6 +91,17 @@ export default function StudentDashboard({ user, onLogout, onViewHome, onOpenUpl
         </div>
 
         <div className="dashboard-actions-group">
+          {onStartInterview && (
+            <button
+              type="button"
+              className="btn-dashboard-interview-launch"
+              onClick={onStartInterview}
+              title="Launch AI Mock Interview Chamber"
+            >
+              <Play size={15} />
+              <span>Start Mock Interview</span>
+            </button>
+          )}
           {onOpenUpload && (
             <button
               type="button"
@@ -120,17 +141,19 @@ export default function StudentDashboard({ user, onLogout, onViewHome, onOpenUpl
         <div className="readiness-left">
           <div className="readiness-badge">
             <Flame size={14} className="flame-icon" />
-            <span>4-Day Practice Streak</span>
+            <span>{analytics?.completed_count ? `${analytics.completed_count} Sessions Evaluated` : '4-Day Practice Streak'}</span>
           </div>
-          <h3 className="readiness-title">Interview Readiness: 86%</h3>
+          <h3 className="readiness-title">Interview Readiness: {analytics?.readiness_index || 86}%</h3>
           <p className="readiness-sub">
-            You're performing in the <strong>Top 8%</strong> of candidates targeting Tier-1 tech companies.
+            {analytics?.completed_count
+              ? `Calculated from ${analytics.completed_count} completed mock interviews with composite score of ${analytics.average_score}%.`
+              : "You're performing in the Top 8% of candidates targeting Tier-1 tech companies."}
           </p>
 
           <div className="readiness-mini-tags">
-            <span className="readiness-tag">System Design: 92%</span>
-            <span className="readiness-tag">Data Structures: 84%</span>
-            <span className="readiness-tag">Behavioral STAR: 88%</span>
+            <span className="readiness-tag">Technical: {analytics?.technical_score ? `${Math.round(analytics.technical_score)}%` : '92%'}</span>
+            <span className="readiness-tag">Communication: {analytics?.communication_score ? `${Math.round(analytics.communication_score)}%` : '88%'}</span>
+            <span className="readiness-tag">Architecture: {analytics?.depth_score ? `${Math.round(analytics.depth_score)}%` : '85%'}</span>
           </div>
         </div>
 
@@ -148,11 +171,11 @@ export default function StudentDashboard({ user, onLogout, onViewHome, onOpenUpl
               cy="50"
               r="40"
               strokeDasharray="251.2"
-              strokeDashoffset="35.1"
+              strokeDashoffset={251.2 - (251.2 * (analytics?.readiness_index || 86)) / 100}
             />
           </svg>
           <div className="radial-text">
-            <span className="radial-number">86%</span>
+            <span className="radial-number">{analytics?.readiness_index || 86}%</span>
             <span className="radial-label">Readiness</span>
           </div>
         </div>
@@ -248,57 +271,103 @@ export default function StudentDashboard({ user, onLogout, onViewHome, onOpenUpl
             Engage in a live voice or text mock interview with adaptive follow-up questions and instant rubric scorecards.
           </p>
 
-          {mockStarted ? (
-            <div className="mock-session-active">
-              <span className="pulse-indicator"></span>
-              <span>Connecting to AI Interview Engine...</span>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="btn-launch-primary"
-              onClick={() => setMockStarted(true)}
-            >
-              <span>Begin Session Now</span>
-              <ArrowUpRight size={16} />
-            </button>
-          )}
+          <button
+            type="button"
+            className="btn-launch-primary"
+            onClick={onStartInterview}
+          >
+            <span>Begin Session Now</span>
+            <ArrowUpRight size={16} />
+          </button>
         </div>
 
-        <div className="launch-card secondary-card">
+        <div
+          className="launch-card secondary-card"
+          onClick={() => setShowHistory(!showHistory)}
+          style={{ cursor: 'pointer' }}
+        >
           <div className="launch-card-header">
             <div className="card-icon-pill secondary">
               <BarChart3 size={18} />
             </div>
-            <span className="card-metric">+6.4% this week</span>
+            <span className="card-metric">
+              {analytics?.completed_count || 0} completed
+            </span>
           </div>
           <h4 className="card-heading">Diagnostics & Transcripts</h4>
           <p className="card-body-text">
             Review your past mock sessions, AI-generated critique notes, speech pacing metrics, and architectural weaknesses.
           </p>
           <div className="card-link-action">
-            <span>View 7 past reports</span>
+            <span>{showHistory ? 'Hide session history' : `View ${analytics?.total_sessions || 0} session records`}</span>
             <ChevronRight size={15} />
           </div>
         </div>
 
-        <div className="launch-card secondary-card">
+        <div
+          className="launch-card secondary-card"
+          onClick={onStartInterview}
+          style={{ cursor: 'pointer' }}
+        >
           <div className="launch-card-header">
             <div className="card-icon-pill secondary">
               <BookOpen size={18} />
             </div>
-            <span className="card-metric">320+ problems</span>
+            <span className="card-metric">FAANG Standard</span>
           </div>
           <h4 className="card-heading">FAANG Question Bank</h4>
           <p className="card-body-text">
             Curated question archives verified by staff interviewers at Google, Meta, Apple, Amazon, and Stripe.
           </p>
           <div className="card-link-action">
-            <span>Explore question pool</span>
+            <span>Start domain practice</span>
             <ChevronRight size={15} />
           </div>
         </div>
       </div>
+
+      {/* Expandable Past Session History Drawer */}
+      {showHistory && (
+        <div className="dashboard-history-drawer">
+          <div className="history-drawer-header">
+            <h4 className="history-title">
+              <BarChart3 size={16} className="text-indigo" />
+              <span>Past Interview Records (Stored in PostgreSQL)</span>
+            </h4>
+            <button
+              type="button"
+              className="btn-close-history"
+              onClick={() => setShowHistory(false)}
+            >
+              Close
+            </button>
+          </div>
+
+          {analytics?.recent_sessions?.length > 0 ? (
+            <div className="history-sessions-list">
+              {analytics.recent_sessions.map((s) => (
+                <div key={s.id} className="history-session-card">
+                  <div className="history-card-top">
+                    <span className="history-role">{s.role}</span>
+                    <span className={`history-verdict-badge ${s.overall_score >= 70 ? 'high' : 'medium'}`}>
+                      {s.hiring_verdict || (s.status === 'completed' ? `${Math.round(s.overall_score)}% Score` : 'In Progress')}
+                    </span>
+                  </div>
+                  <div className="history-card-meta">
+                    <span>{s.target_company}</span>
+                    <span>•</span>
+                    <span>{s.difficulty}</span>
+                    <span>•</span>
+                    <span>{new Date(s.started_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="history-empty-text">No completed sessions yet. Launch your first mock session above to generate reports!</p>
+          )}
+        </div>
+      )}
 
       {/* Account Info Pill Footer */}
       <div className="dashboard-account-meta">

@@ -107,7 +107,7 @@ const PERSONALIZATION_TRACKS = [
   }
 ];
 
-export default function HomePage({ onOpenAuth, currentUser, onGoToDashboard, onOpenUpload }) {
+export default function HomePage({ onOpenAuth, currentUser, onGoToDashboard, onOpenUpload, onStartInterview }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedPersonalization, setSelectedPersonalization] = useState(0);
   const [feedbackTab, setFeedbackTab] = useState('rubric'); // 'rubric' | 'strengths' | 'model'
@@ -115,7 +115,9 @@ export default function HomePage({ onOpenAuth, currentUser, onGoToDashboard, onO
   const activeTrack = PERSONALIZATION_TRACKS[selectedPersonalization];
 
   const handleStartInterview = () => {
-    if (currentUser) {
+    if (onStartInterview && currentUser) {
+      onStartInterview();
+    } else if (currentUser) {
       onGoToDashboard();
     } else {
       onOpenAuth('signup');

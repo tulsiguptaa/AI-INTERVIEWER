@@ -5,6 +5,7 @@ import Signup from './components/Signup';
 import StudentDashboard from './components/StudentDashboard';
 import HomePage from './components/HomePage';
 import ResumeUpload from './components/ResumeUpload';
+import InterviewModule from './components/InterviewModule';
 import { apiFetch, saveAuthSession, clearAuthSession } from './services/api';
 
 export default function App() {
@@ -21,6 +22,9 @@ export default function App() {
 
   const [view, setView] = useState(() => {
     const params = new URLSearchParams(window.location.search);
+    if (params.get('interview') || params.get('view') === 'interview') {
+      return 'interview';
+    }
     if (params.get('upload') || params.get('resume') || params.get('view') === 'upload') {
       return 'upload-resume';
     }
@@ -46,7 +50,7 @@ export default function App() {
         if (data && data.authenticated && data.user) {
           setCurrentUser(data.user);
           saveAuthSession(data.user, data.session_key);
-          if (view !== 'upload-resume') {
+          if (view !== 'upload-resume' && view !== 'interview') {
             setView('dashboard');
           }
           if (window.location.search.includes('login=')) {
@@ -94,6 +98,13 @@ export default function App() {
           currentUser={currentUser}
           onGoToDashboard={() => setView('dashboard')}
           onOpenUpload={() => setView('upload-resume')}
+          onStartInterview={() => {
+            if (currentUser) {
+              setView('interview');
+            } else {
+              handleOpenAuth('signup');
+            }
+          }}
         />
       )}
 
@@ -104,8 +115,17 @@ export default function App() {
             onLogout={handleLogout}
             onViewHome={() => setView('home')}
             onOpenUpload={() => setView('upload-resume')}
+            onStartInterview={() => setView('interview')}
           />
         </div>
+      )}
+
+      {view === 'interview' && (
+        <InterviewModule
+          currentUser={currentUser}
+          onBackToDashboard={() => setView(currentUser ? 'dashboard' : 'home')}
+          onOpenUpload={() => setView('upload-resume')}
+        />
       )}
 
       {view === 'upload-resume' && (

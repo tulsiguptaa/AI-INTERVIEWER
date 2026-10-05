@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'accounts',
+    'interviews',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
